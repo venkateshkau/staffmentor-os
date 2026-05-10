@@ -1,0 +1,152 @@
+:root {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #111827;
+  background: #f3f4f6;
+}
+
+body { margin: 0; }
+button, input, textarea, select { font: inherit; }
+
+.app-shell { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+.sidebar { background: #111827; color: white; padding: 24px; }
+.sidebar a { display: block; color: #d1d5db; text-decoration: none; margin: 12px 0; }
+.sidebar a.active, .sidebar a:hover { color: white; }
+.content { padding: 32px; }
+.card { background: white; border-radius: 18px; padding: 20px; box-shadow: 0 10px 30px rgba(15,23,42,0.08); margin-bottom: 20px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+.form { display: grid; gap: 12px; max-width: 720px; }
+.input, .textarea, .select { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 10px; background: white; }
+.textarea { min-height: 88px; }
+.button { border: none; border-radius: 10px; background: #2563eb; color: white; padding: 10px 14px; cursor: pointer; }
+.button.secondary { background: #374151; }
+.badge { display: inline-block; border-radius: 999px; background: #e5e7eb; padding: 4px 10px; font-size: 12px; }
+.muted { color: #6b7280; }
+.priority-section {
+  margin-bottom: 36px;
+}
+
+.priority-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.priority-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+}
+
+.priority-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.goal-card {
+  position: relative;
+  border-left: 6px solid transparent;
+}
+
+.goal-card.priority-0 {
+  border-left-color: #dc2626;
+}
+
+.goal-card.priority-1 {
+  border-left-color: #ea580c;
+}
+
+.goal-card.priority-2 {
+  border-left-color: #2563eb;
+}
+
+.goal-card.priority-3 {
+  border-left-color: #6b7280;
+}
+
+.goal-card.priority-4 {
+  border-left-color: #7c3aed;
+}
+
+.priority-badge-0 {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.priority-badge-1 {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.priority-badge-2 {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.priority-badge-3 {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.priority-badge-4 {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.goal-actions {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.select.priority-0 {
+  border-color: #dc2626;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.select.priority-1 {
+  border-color: #ea580c;
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.select.priority-2 {
+  border-color: #2563eb;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.select.priority-3 {
+  border-color: #6b7280;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.select.priority-4 {
+  border-color: #7c3aed;
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.status-active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-paused {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-completed {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-archived {
+  background: #e5e7eb;
+  color: #374151;
+}

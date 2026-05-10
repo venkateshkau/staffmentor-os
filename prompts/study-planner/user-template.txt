@@ -1,0 +1,7 @@
+Inputs:
+- Daily check-in
+- Active goals
+- Weak/stale skills
+
+Output JSON fields:
+mainTopic, whyItMatters, studyTask, codingTask, staffReflectionQuestion, expectedOutput, suggestedCalendarBlock, estimatedMinutes
