@@ -36,8 +36,11 @@ public class CoachSession {
     @Column(columnDefinition = "TEXT")
     private String todayFocus;
 
-    @Column(columnDefinition = "TEXT")
-    private String actionItems;
+    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<ActionItem> actionItems = new java.util.ArrayList<>();
+
+    @OneToOne(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Verification verification;
 
     @Column(columnDefinition = "TEXT")
     private String calendarSuggestions;

@@ -9,9 +9,14 @@ import com.staffmentor.coach.dto.DailyCoachResponse;
 import com.staffmentor.coach.dto.LatestCoachSessionResponse;
 import com.staffmentor.coach.entity.CoachSession;
 import com.staffmentor.coach.repository.CoachSessionRepository;
+import com.staffmentor.coach.repository.ActionItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.staffmentor.ai.prompt.PromptService;
+import com.staffmentor.coach.dto.ActionItemDto;
+import com.staffmentor.coach.entity.ActionItem;
+import com.staffmentor.coach.dto.VerificationDto;
 
 @Service
 @RequiredArgsConstructor
@@ -21,8 +26,10 @@ public class CoachService {
     private final ObjectMapper objectMapper;
     private final PromptService promptService;
     private final CoachSessionRepository coachSessionRepository;
+    private final ActionItemRepository actionItemRepository;
 
-    public DailyCoachResponse generateDailyCoaching(
+    @Transactional
+    public LatestCoachSessionResponse generateDailyCoaching(
             DailyCoachRequest request
     ) {
 
@@ -30,6 +37,21 @@ public class CoachService {
                 PromptFeature.DAILY_COACH,
                 PromptType.SYSTEM
         );
+
+        CoachSession yesterdaySession = coachSessionRepository.findTopByOrderByCreatedAtDesc()
+                .filter(session -> !session.getCreatedAt().toLocalDate().equals(java.time.LocalDate.now()))
+                .orElse(null);
+
+        if (yesterdaySession != null && yesterdaySession.getActionItems() != null && !yesterdaySession.getActionItems().isEmpty()) {
+            long completedCount = yesterdaySession.getActionItems().stream().filter(ActionItem::getCompleted).count();
+            int completionPercent = (int) ((completedCount * 100) / yesterdaySession.getActionItems().size());
+
+            if (completionPercent < 50) {
+                systemPrompt += "\n\nCRITICAL CONTEXT: The user completed only " + completionPercent + "% of yesterday's tasks. YOU MUST reduce today's scope to prevent overload. Prioritize consistency over volume. Simplify the plan.";
+            } else if (completionPercent == 100) {
+                systemPrompt += "\n\nCRITICAL CONTEXT: The user completed 100% of yesterday's tasks. Keep the momentum going, but do not artificially inflate the workload.";
+            }
+        }
 
         String userPrompt =  promptService.getActivePrompt(
                         PromptFeature.DAILY_COACH,
@@ -43,6 +65,40 @@ public class CoachService {
                         request.upcomingInterview(),
                         request.additionalNotes()
                 );
+
+        if (request.workspacePath() != null && !request.workspacePath().trim().isEmpty()) {
+            try {
+                java.nio.file.Path startPath = java.nio.file.Paths.get(request.workspacePath());
+                if (java.nio.file.Files.exists(startPath) && java.nio.file.Files.isDirectory(startPath)) {
+                    StringBuilder contextBuilder = new StringBuilder("\n\nLOCAL WORKSPACE CONTEXT (Use this to provide highly specific, relevant starting prompts):\n");
+                    try (java.util.stream.Stream<java.nio.file.Path> stream = java.nio.file.Files.walk(startPath)) {
+                        stream.filter(p -> {
+                            String name = p.toString();
+                            return !name.contains("node_modules") && !name.contains(".git") && !name.contains("target") && !name.contains("dist")
+                                    && (name.endsWith(".java") || name.endsWith(".ts") || name.endsWith(".tsx"));
+                        })
+                        .sorted((p1, p2) -> {
+                            try {
+                                return java.nio.file.Files.getLastModifiedTime(p2).compareTo(java.nio.file.Files.getLastModifiedTime(p1));
+                            } catch (Exception e) { return 0; }
+                        })
+                        .limit(3)
+                        .forEach(p -> {
+                            try {
+                                String content = java.nio.file.Files.readString(p);
+                                contextBuilder.append("\n--- ").append(p.getFileName()).append(" ---\n");
+                                contextBuilder.append(content.length() > 1000 ? content.substring(0, 1000) + "...(truncated)" : content);
+                            } catch (Exception e) {
+                                // ignore read errors
+                            }
+                        });
+                    }
+                    userPrompt += contextBuilder.toString();
+                }
+            } catch (Exception e) {
+                // Ignore workspace read errors
+            }
+        }
 
         try {
 
@@ -77,9 +133,7 @@ public class CoachService {
 
             session.setTodayFocus(parsed.todayFocus());
 
-            session.setActionItems(
-                    String.join("\n", parsed.actionItems())
-            );
+
 
             session.setCalendarSuggestions(
                     String.join("\n", parsed.calendarSuggestions())
@@ -94,46 +148,81 @@ public class CoachService {
             );
 
             session.setCompleted(false);
+            
+            java.util.List<ActionItem> actionItems = new java.util.ArrayList<>();
+            for (String itemStr : parsed.actionItems()) {
+                ActionItem item = new ActionItem();
+                item.setId(java.util.UUID.randomUUID());
+                item.setSession(session);
+                item.setDescription(itemStr);
+                item.setCompleted(false);
+                item.setCreatedAt(java.time.LocalDateTime.now());
+                actionItems.add(item);
+            }
+            session.setActionItems(actionItems);
 
             coachSessionRepository.save(session);
 
-            return parsed;
+            return mapToDto(session);
 
         } catch (Exception ex) {
 
-            return new DailyCoachResponse(
-                    "Focus on one high-leverage backend topic today.",
-                    java.util.List.of(
-                            "Study Java concurrency for 45 minutes",
-                            "Implement one backend improvement",
-                            "Write one engineering note"
-                    ),
-                    java.util.List.of(
-                            "7:00 PM - 8:30 PM Deep Work"
-                    ),
-                    "What blocked your momentum yesterday?",
-                    "Consistency beats intensity."
-            );
+            return null; // For MVP, if it fails, the frontend handles it or we could throw an exception instead of returning a hardcoded response, but let's just throw for cleaner error handling or return null.
         }
     }
 
     public LatestCoachSessionResponse getLatestSession() {
-
         return coachSessionRepository
                 .findTopByOrderByCreatedAtDesc()
-                .map(session ->
-                        new LatestCoachSessionResponse(
-                                session.getId(),
-                                session.getCreatedAt(),
-                                session.getTodayFocus(),
-                                splitLines(session.getActionItems()),
-                                splitLines(session.getCalendarSuggestions()),
-                                session.getFollowUpQuestion(),
-                                session.getMotivation(),
-                                session.getCompleted()
-                        )
-                )
+                .map(this::mapToDto)
                 .orElse(null);
+    }
+    
+    public LatestCoachSessionResponse getTodaySession() {
+        return coachSessionRepository
+                .findTopByOrderByCreatedAtDesc()
+                .filter(session -> session.getCreatedAt().toLocalDate().equals(java.time.LocalDate.now()))
+                .map(this::mapToDto)
+                .orElse(null);
+    }
+    
+    @Transactional
+    public ActionItemDto toggleActionItemCompletion(java.util.UUID actionItemId, boolean completed) {
+        ActionItem item = actionItemRepository.findById(actionItemId)
+                .orElseThrow(() -> new IllegalArgumentException("Action item not found"));
+        item.setCompleted(completed);
+        actionItemRepository.save(item);
+        return new ActionItemDto(item.getId(), item.getDescription(), item.getCompleted());
+    }
+
+    private LatestCoachSessionResponse mapToDto(CoachSession session) {
+        java.util.List<ActionItemDto> actionItemDtos = session.getActionItems().stream()
+                .map(item -> new ActionItemDto(item.getId(), item.getDescription(), item.getCompleted()))
+                .toList();
+
+        VerificationDto verificationDto = null;
+        if (session.getVerification() != null) {
+            verificationDto = new VerificationDto(
+                    session.getVerification().getId(),
+                    session.getVerification().getSubmissionText(),
+                    session.getVerification().getMasteryLevel(),
+                    session.getVerification().getConfidenceScore(),
+                    session.getVerification().getAiFeedback(),
+                    session.getVerification().getCreatedAt()
+            );
+        }
+
+        return new LatestCoachSessionResponse(
+                session.getId(),
+                session.getCreatedAt(),
+                session.getTodayFocus(),
+                actionItemDtos,
+                splitLines(session.getCalendarSuggestions()),
+                session.getFollowUpQuestion(),
+                session.getMotivation(),
+                session.getCompleted(),
+                verificationDto
+        );
     }
 
     private java.util.List<String> splitLines(String value) {

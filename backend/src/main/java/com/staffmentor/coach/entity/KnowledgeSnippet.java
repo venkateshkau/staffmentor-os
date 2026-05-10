@@ -1,4 +1,4 @@
-package com.staffmentor.goal.entity;
+package com.staffmentor.coach.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -13,25 +13,19 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "goals")
-public class Goal {
+@Table(name = "knowledge_snippets")
+public class KnowledgeSnippet {
     @Id
     private UUID id;
 
-    @Column(nullable = false)
-    private String title;
-
-    @Column(columnDefinition = "TEXT")
-    private String description;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private GoalStatus status;
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String content;
 
     @Column(nullable = false)
-    private Integer priority;
+    private LocalDate nextReviewDate;
 
-    private LocalDate targetDate;
+    @Column(nullable = false)
+    private Integer intervalDays;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -39,15 +33,9 @@ public class Goal {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sprint_id")
-    private com.staffmentor.project.entity.Sprint sprint;
-
     @PrePersist
     void prePersist() {
         if (id == null) id = UUID.randomUUID();
-        if (status == null) status = GoalStatus.ACTIVE;
-        if (priority == null) priority = 3;
         createdAt = LocalDateTime.now();
         updatedAt = createdAt;
     }

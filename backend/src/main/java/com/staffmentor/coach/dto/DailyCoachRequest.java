@@ -6,6 +6,7 @@ public record DailyCoachRequest(
         Boolean completedYesterday,
         String blockers,
         String upcomingInterview,
-        String additionalNotes
+        String additionalNotes,
+        String workspacePath
 ) {
 }

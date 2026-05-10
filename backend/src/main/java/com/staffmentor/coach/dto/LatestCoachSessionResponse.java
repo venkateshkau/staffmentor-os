@@ -8,10 +8,11 @@ public record LatestCoachSessionResponse(
         UUID id,
         LocalDateTime createdAt,
         String todayFocus,
-        List<String> actionItems,
+        List<ActionItemDto> actionItems,
         List<String> calendarSuggestions,
         String followUpQuestion,
         String motivation,
-        Boolean completed
+        Boolean completed,
+        VerificationDto verification
 ) {
 }
