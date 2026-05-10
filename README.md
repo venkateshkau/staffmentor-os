@@ -546,6 +546,101 @@ This project demonstrates:
 5. Generate AI study plan.
 6. Explain the backend architecture:
 
+## Adaptive Coaching Loop
+
+StaffMentor OS is designed around a continuous execution loop:
+
+Plan
+→ Execute
+→ Reflect
+→ Verify
+→ Adapt
+→ Grow
+
+The mentor system continuously adapts daily coaching based on:
+- previous execution quality
+- reflections
+- blockers
+- confidence
+- interview urgency
+- available energy/time
+
+## Reflection-Aware Coaching
+
+The mentor engine is stateful.
+
+Daily reflections are persisted and injected into future coaching prompts so the AI can:
+- reduce overload
+- reprioritize goals
+- detect unrealistic plans
+- maintain consistency
+- adapt based on execution quality
+
+
+## Prompt Management System
+
+Prompts are treated as versioned product assets.
+
+Features:
+- database-driven prompts
+- prompt versioning
+- prompt activation/deactivation
+- soft delete support
+- runtime prompt updates
+
+This enables rapid prompt iteration without redeploying code.
+
+## AI Observability
+
+AI interactions are persisted for:
+- latency tracking
+- prompt/response auditing
+- debugging
+- telemetry
+- future evaluation systems
+
+Cross-cutting telemetry concerns are isolated using Spring AOP.
+
+## Planned Adaptive Goal System
+
+Future roadmap includes:
+- Job Description ingestion
+- interview sprint generation
+- adaptive goal reprioritization
+- AI-generated roadmap timelines
+- Gantt-style progress visualization
+
+
+
+## MCP Readiness Design
+
+StaffMentor OS is designed for future MCP tool integration.
+
+Key decisions enabling MCP:
+- Tool requests are generated as structured objects
+- Tool calls are explicitly separated from response generation
+- Tool outputs are processed before final response rendering
+- MCP tool results can be injected into future prompts
+- All tool outputs are logged for audit and validation
+
+Planned MCP tools in roadmap:
+- Google Calendar
+- Gmail (draft mode)
+- GitHub (reading/writing)
+- Local file system
+- Obsidian knowledge base
+
+The system already separates tool-calling logic into dedicated classes that can be mapped to MCP tools in the future.
+
+## Planned Knowledge Verification Engine
+
+The mentor system will eventually validate learning quality through:
+- follow-up questions
+- implementation reviews
+- confidence calibration
+- mastery tracking
+- adaptive questioning
+
 ```text
 Controller → Service → Orchestrator → Prompt Builder → AI Client → Parser → Persistence
 ```
